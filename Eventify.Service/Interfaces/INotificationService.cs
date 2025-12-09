@@ -14,5 +14,9 @@ namespace Eventify.Service.Interfaces
         Task SendPaymentSuccessAsync(int bookingId, decimal amount, string email, string phoneNumber = null);
         Task SendPaymentFailureAsync(int bookingId, string email, string phoneNumber = null);
         Task SendRefundNotificationAsync(int bookingId, decimal amount, string email, string phoneNumber = null);
+        
+        // New methods for Zoom integration
+        Task SendEventCreatedNotificationToOrganizerAsync(int eventId);
+        Task SendBookingConfirmationWithEventDetailsAsync(int bookingId);
     }
 }

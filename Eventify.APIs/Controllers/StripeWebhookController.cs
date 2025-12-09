@@ -63,6 +63,20 @@ namespace Eventify.APIs.Controllers
                         var succeededIntent = stripeEvent.Data.Object as PaymentIntent;
                         await _paymentService.UpdatePaymentStatusAsync(succeededIntent.Id, PaymentStatus.Paid);
                         await _notificationService.SendPaymentSuccessAsyncByIntentId(succeededIntent.Id);
+
+                        // Also send booking confirmation with event details (includes Zoom if online)
+                        var payment = await _paymentService.GetByIntentIdAsync(succeededIntent.Id);
+                        if (payment != null)
+                        {
+                            try
+                            {
+                                await _notificationService.SendBookingConfirmationWithEventDetailsAsync(payment.BookingId);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, $"Failed to send booking confirmation for booking {payment.BookingId}");
+                            }
+                        }
                         break;
 
                     case "payment_intent.payment_failed":

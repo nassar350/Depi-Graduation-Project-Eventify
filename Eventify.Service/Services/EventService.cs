@@ -20,13 +20,15 @@ namespace Eventify.Service.Services
         private readonly IMapper _mapper;
         private readonly IPhotoService _photoService;
         private readonly IZoomService _zoomService;
+        private readonly INotificationService _notificationService;
 
-        public EventService(IMapper mapper, IUnitOfWork unitOfWork, IPhotoService photoService, IZoomService zoomService)
+        public EventService(IMapper mapper, IUnitOfWork unitOfWork, IPhotoService photoService, IZoomService zoomService, INotificationService notificationService)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _photoService = photoService;
             _zoomService = zoomService;
+            _notificationService = notificationService;
         }
 
         public async Task<IEnumerable<EventDto>> GetAllAsync()
@@ -118,6 +120,17 @@ namespace Eventify.Service.Services
                 await _unitOfWork._ticketRepository.AddRangeAsync(mappedTickets);
                 await _unitOfWork.SaveChangesAsync();
                 await transaction.CommitAsync();
+                
+                // Send event creation notification to organizer
+                try
+                {
+                    await _notificationService.SendEventCreatedNotificationToOrganizerAsync(curEvent.Id);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail the event creation
+                    // Notification failures shouldn't break the main flow
+                }
                 var CurDto = _mapper.Map<EventDto>(ev);
                 return ServiceResult<EventDto>.Ok(CurDto);
             }
